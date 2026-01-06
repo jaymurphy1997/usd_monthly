@@ -1,0 +1,21 @@
+program_category,Channel,Session,sessions_yoy_difference,Pageview,pageview_yoy_difference,Conversions,conversions_yoy_difference,Conversion_Rate,conversion_rate_yoy_percent_difference
+Data Science,Organic Search,1017,-3193,1097,-3761,3,-7,0.0029498525073746312,0.2418879056047197
+EML,Organic Search,753,-1272,866,-1423,3,-1,0.00398406374501992,1.0169322709163346
+Data Science,Direct,601,-676,675,-1160,5,-9,0.008319467554076539,-0.24114570953173284
+EML,Paid Search,512,-382,670,-564,81,40,0.158203125,2.4495998475609757
+EML,Paid Social,465,403,495,427,22,21,0.047311827956989246,1.9333333333333333
+EML,Direct,460,-142,584,-276,7,-5,0.015217391304347827,-0.23659420289855065
+EML,Display,267,,290,,11,,0.04119850187265917,
+Data Science,Paid Search,259,-584,319,-1085,21,-7,0.08108108108108109,1.4411196911196915
+Data Science,Paid Social,161,-71,195,-51,17,16,0.10559006211180125,23.49689440993789
+Data Science,Referral,77,11,80,-19,0,-4,0,-1
+EML,Referral,47,18,80,41,2,1,0.0425531914893617,0.23404255319148934
+Data Science,AI Traffic,31,-14,34,-18,0,0,0,
+EML,AI Traffic,22,14,22,13,0,0,0,
+EML,Email,18,17,26,24,0,0,0,
+EML,Unknown - Data Not Available / Data Not Available,14,,18,,1,,0.07142857142857142,
+Data Science,Email,7,-119,9,-151,0,-1,0,-1
+Data Science,Organic Social,5,-12,5,-14,0,0,0,
+Data Science,Unknown - blog / inlinecta,2,,2,,0,,0,
+Data Science,Unknown - Data Not Available / Data Not Available,1,,1,,0,,0,
+EML,Organic Social,1,-9,1,-10,0,0,0,

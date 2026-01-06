@@ -1,0 +1,21 @@
+program_category,Channel,Session,sessions_mom_difference,Pageview,pageview_mom_difference,Conversions,conversions_mom_difference,Conversion_Rate,conversion_rate_mom_percent_difference
+Data Science,Organic Search,1017,9,1097,-32,3,-2,0.0029498525073746312,-0.4053097345132743
+EML,Organic Search,753,175,866,176,3,-2,0.00398406374501992,-0.5394422310756972
+Data Science,Direct,601,-343,675,-401,5,-7,0.008319467554076539,-0.34553521907931234
+EML,Paid Search,512,-128,670,-311,81,33,0.158203125,1.109375
+EML,Paid Social,465,4,495,-17,22,2,0.047311827956989246,0.09053763440860212
+EML,Direct,460,78,584,79,7,5,0.015217391304347827,1.9065217391304348
+EML,Display,267,266,290,285,11,11,0.04119850187265917,
+Data Science,Paid Search,259,-17,319,-41,21,-2,0.08108108108108109,-0.027027027027026918
+Data Science,Paid Social,161,-24,195,-55,17,3,0.10559006211180125,0.3952972493345164
+Data Science,Referral,77,-12,80,-62,0,-5,0,-1
+EML,Referral,47,15,80,27,2,-3,0.0425531914893617,-0.727659574468085
+Data Science,AI Traffic,31,-11,34,-14,0,0,0,
+EML,AI Traffic,22,7,22,11,0,0,0,
+EML,Email,18,4,26,11,0,0,0,
+EML,Unknown - Data Not Available / Data Not Available,14,8,18,-7,1,0,0.07142857142857142,-0.5714285714285714
+Data Science,Email,7,-33,9,-34,0,0,0,
+Data Science,Organic Social,5,-1,5,0,0,0,0,
+Data Science,Unknown - blog / inlinecta,2,-2,2,-2,0,-1,0,-1
+Data Science,Unknown - Data Not Available / Data Not Available,1,-2,1,-4,0,0,0,
+EML,Organic Social,1,0,1,0,0,0,0,
