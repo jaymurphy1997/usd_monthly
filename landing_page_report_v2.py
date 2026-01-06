@@ -144,20 +144,32 @@ def generate_markdown(data: pd.DataFrame, output_file: str) -> None:
                     conv_mom = row.get('Conversions_mom', 0)
                     conv_mom_diff = row.get('conversions_mom_difference', 0)
                     conv_yoy_diff = row.get('conversions_yoy_difference', 0)
-                    
-                    # Conversion rates
-                    conv_rate_mom_pct = row.get('conversion_rate_mom_percent_difference', 0)
-                    conv_rate_yoy_pct = row.get('conversion_rate_yoy_percent_difference', 0)
+
+                    # Calculate percent change in conversions (not conversion rate)
+                    # Previous period conversions = current - difference
+                    prev_conv_mom = conv_mom - conv_mom_diff
+                    prev_conv_yoy = conv_mom - conv_yoy_diff
+
+                    # Calculate percentage change (handle division by zero)
+                    if prev_conv_mom != 0:
+                        conv_pct_change_mom = (conv_mom_diff / prev_conv_mom) * 100
+                    else:
+                        conv_pct_change_mom = 100.0 if conv_mom_diff > 0 else 0.0
+
+                    if prev_conv_yoy != 0:
+                        conv_pct_change_yoy = (conv_yoy_diff / prev_conv_yoy) * 100
+                    else:
+                        conv_pct_change_yoy = 100.0 if conv_yoy_diff > 0 else 0.0
                     
                     # Format the output with proper signs
                     sessions_yoy_str = f"+{sessions_yoy_diff:.0f}" if sessions_yoy_diff >= 0 else f"{sessions_yoy_diff:.0f}"
                     sessions_mom_str = f"+{sessions_mom_diff:.0f}" if sessions_mom_diff >= 0 else f"{sessions_mom_diff:.0f}"
                     
                     conv_yoy_diff_str = f"+{conv_yoy_diff:.0f}" if conv_yoy_diff >= 0 else f"{conv_yoy_diff:.0f}"
-                    conv_yoy_pct_str = f"+{conv_rate_yoy_pct:.2f}" if conv_rate_yoy_pct >= 0 else f"{conv_rate_yoy_pct:.2f}"
-                    
+                    conv_yoy_pct_str = f"+{conv_pct_change_yoy:.0f}" if conv_pct_change_yoy >= 0 else f"{conv_pct_change_yoy:.0f}"
+
                     conv_mom_diff_str = f"+{conv_mom_diff:.0f}" if conv_mom_diff >= 0 else f"{conv_mom_diff:.0f}"
-                    conv_mom_pct_str = f"+{conv_rate_mom_pct:.2f}" if conv_rate_mom_pct >= 0 else f"{conv_rate_mom_pct:.2f}"
+                    conv_mom_pct_str = f"+{conv_pct_change_mom:.0f}" if conv_pct_change_mom >= 0 else f"{conv_pct_change_mom:.0f}"
                     
                     # Write the bullet point
                     f.write(f'* "{page}": {sessions_mom:.0f} sessions ')
