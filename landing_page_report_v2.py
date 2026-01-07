@@ -52,11 +52,11 @@ def filter_channels(data: pd.DataFrame, channels: List[str]) -> pd.DataFrame:
     return data[data['default_channel'].isin(channels)].copy()
 
 
-def get_top_pages(data: pd.DataFrame, group_cols: List[str], 
+def get_top_pages(data: pd.DataFrame, group_cols: List[str],
                   metric: str, top_n: int = 3) -> pd.DataFrame:
     """Get top N pages by metric for each program and channel combination."""
     return (data.groupby(group_cols)
-            .apply(lambda x: x.nlargest(top_n, metric))
+            .apply(lambda x: x.nlargest(top_n, metric), include_groups=False)
             .reset_index(drop=True))
 
 
