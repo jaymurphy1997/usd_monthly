@@ -1,0 +1,234 @@
+program_category,Channel,Session,sessions_mom_difference,Pageview,pageview_mom_difference,Conversions,conversions_mom_difference,Conversion_Rate,conversion_rate_mom_percent_difference
+MED,Organic Search,18691,4823,21458,5769,36,4,0.0019260606709111338,-0.16529345674388732
+MSAAI,Organic Search,9650,-278,10577,-51,34,9,0.003523316062176166,0.39917927461139896
+MED,Direct,5968,1644,6593,1805,26,0,0.00435656836461126,-0.2754691689008042
+MSAAI,Direct,3616,-533,4266,-548,30,10,0.008296460176991151,0.7211006637168144
+MTS,Organic Search,3178,643,3592,642,14,8,0.004405286343612335,0.8612334801762116
+CyberOps,Organic Search,2387,435,2556,454,9,6,0.003770423125261835,1.453288646837034
+MSHA,Organic Search,2255,196,2392,118,9,-4,0.003991130820399113,-0.367866280061402
+MESH,Organic Search,2206,552,2459,539,7,0,0.003173164097914778,-0.2502266545784225
+LEPSL,Organic Search,2118,102,2499,57,10,7,0.004721435316336166,2.1728045325779037
+Informatics,Paid Social,2116,1952,2310,2141,137,134,0.06474480151228733,2.5393824826717073
+MSLDT,Organic Search,2074,332,2254,254,7,-13,0.0033751205400192863,-0.7060270009643201
+Default - (not set),Direct,1961,60,2525,116,22,10,0.011218765935747067,0.7772395036545979
+Default - (not set),Organic Search,1628,202,2077,254,6,1,0.0036855036855036856,0.05110565110565117
+CyberEng,Paid Social,1378,1324,1456,1399,44,42,0.03193033381712627,-0.13788098693759074
+MTS,Direct,1337,478,1879,490,15,9,0.011219147344801795,0.6062079281974571
+Informatics,Organic Search,1261,-17,1534,-60,4,-5,0.0031720856463124504,-0.5495638382236321
+CyberOps,Direct,1246,211,1331,185,10,-1,0.008025682182985553,-0.24485626732817756
+CyberOps,Paid Social,1168,1067,1282,1178,80,80,0.0684931506849315,
+Data Science,Organic Search,1162,156,1233,168,2,-2,0.0017211703958691911,-0.5671256454388984
+MSAAI,Paid Social,1061,788,1244,895,52,30,0.049010367577756835,-0.3918258932396539
+MSITL,Organic Search,1014,109,1178,157,1,-4,0.0009861932938856016,-0.8214990138067061
+MSNP,Organic Search,993,36,1178,-440,8,2,0.008056394763343404,0.28499496475327296
+EML,Organic Search,980,250,1015,207,6,1,0.006122448979591836,-0.10612244897959183
+LEPSL,Direct,973,-63,1245,-106,9,4,0.009249743062692703,0.9165467625899281
+Informatics,Paid Search,973,398,1291,537,39,11,0.040082219938335044,-0.17688298340919106
+CyberEng,Organic Search,970,204,993,137,2,1,0.002061855670103093,0.5793814432989691
+MSNP,Paid Social,931,791,1033,880,59,50,0.06337271750805586,-0.014202172096908805
+MSLDT,Direct,894,39,1235,27,24,16,0.026845637583892617,1.8691275167785233
+MESH,Paid Social,893,582,963,644,22,22,0.02463605823068309,
+MESH,Direct,819,-7,1003,-153,9,2,0.01098901098901099,0.2967032967032968
+MED,Referral,810,476,888,542,5,1,0.006172839506172839,-0.48456790123456794
+Informatics,Direct,799,-31,1010,-182,14,2,0.017521902377972465,0.21193158114309543
+MTS,Paid Search,722,381,960,523,50,28,0.06925207756232687,0.07340720221606659
+MSHA,Direct,709,124,834,29,9,-4,0.012693935119887164,-0.42877291960507763
+MSAAI,Paid Search,707,520,952,609,43,29,0.06082036775106082,-0.18761365932511614
+MSAAI,Referral,699,261,871,294,10,-1,0.01430615164520744,-0.43035505267264923
+MTS,Paid Social,692,419,821,452,75,22,0.10838150289017341,-0.4417330134147672
+MSNNL,Paid Search,642,286,985,423,25,8,0.03894080996884735,-0.18453362653472608
+CyberEng,Direct,642,119,699,72,4,1,0.006230529595015576,0.08618899273104873
+EML,Paid Social,633,596,681,638,21,20,0.03317535545023697,0.2274881516587678
+Data Science,Direct,595,-71,656,-90,11,8,0.018487394957983194,3.104201680672269
+LEPSL,Paid Social,593,387,631,419,37,28,0.06239460370994941,0.4281431515832865
+Default - (not set),Paid Search,551,276,853,438,9,5,0.016333938294010888,0.12295825771324853
+CyberOps,Paid Search,519,260,625,288,26,3,0.05009633911368015,-0.4358716595459496
+MSLDT,Paid Social,483,444,544,503,25,24,0.051759834368530024,1.018633540372671
+MESH,Paid Search,480,231,685,344,22,20,0.04583333333333333,4.706250000000001
+MSNP,Direct,467,24,834,67,13,-6,0.027837259100642397,-0.350952327285022
+EML,Direct,465,100,517,81,2,-1,0.004301075268817204,-0.4767025089605734
+Data Science,Paid Social,428,361,463,395,4,4,0.009345794392523364,
+LEPSL,Display,403,384,411,393,1,1,0.0024813895781637717,
+MSITL,Direct,392,-141,545,-229,1,-5,0.002551020408163265,-0.7733843537414966
+MSLDT,Paid Search,383,244,510,318,24,10,0.06266318537859007,-0.3778440880268557
+MED,Paid Social,365,322,399,356,10,10,0.0273972602739726,
+LEPSL,Email,330,-87,432,-63,0,-15,0,-1
+MSHA,Paid Social,317,-77,380,-100,31,-11,0.09779179810725552,-0.08261979870812676
+EML,Paid Search,317,183,418,238,13,2,0.04100946372239748,-0.5004301691998853
+MED,Paid Search,308,173,438,198,18,6,0.05844155844155844,-0.3425324675324676
+MSNNL,Paid Social,290,260,449,413,52,48,0.1793103448275862,0.3448275862068966
+MSNP,Paid Search,271,90,441,168,14,3,0.05166051660516605,-0.14994968131499492
+MSNNL,Direct,268,93,427,69,11,5,0.041044776119402986,0.197139303482587
+MSITL,Paid Social,265,195,343,269,24,22,0.09056603773584905,2.169811320754717
+MSNNL,Display,261,243,263,221,2,-4,0.007662835249042145,-0.9770114942528735
+CyberEng,Paid Search,238,78,264,72,10,4,0.04201680672268908,0.12044817927170881
+LEPSL,Referral,224,79,304,116,3,3,0.013392857142857142,
+CyberOps,Referral,205,161,208,163,0,0,0,
+MSLDT,Referral,201,57,235,3,1,0,0.004975124378109453,-0.2835820895522388
+MSITL,Paid Search,194,80,370,188,15,8,0.07731958762886598,0.25920471281296037
+LEPSL,Paid Search,193,118,276,157,16,13,0.08290155440414508,1.072538860103627
+MSNNL,Organic Search,179,36,301,-92,2,-1,0.0111731843575419,-0.46741154562383613
+Data Science,Paid Search,175,65,213,73,1,1,0.005714285714285714,
+MSHA,Paid Search,166,91,249,152,18,13,0.10843373493975904,0.6265060240963856
+Default - (not set),Referral,120,28,170,16,1,1,0.008333333333333333,
+MED,Organic Social,113,47,133,57,0,-3,0,-1
+MSAAI,Unknown - chatgpt.com / (not set),107,,142,,2,,0.018691588785046728,
+MSHA,Referral,106,36,103,-4,2,-5,0.018867924528301886,-0.8113207547169812
+Data Science,Referral,104,18,118,29,1,1,0.009615384615384616,
+MSNNL,Unknown - social / social,98,,98,,0,,0,
+Informatics,Referral,90,73,106,88,0,0,0,
+MED,Email,79,47,114,77,4,4,0.05063291139240506,
+MESH,Referral,76,2,86,-16,1,0,0.013157894736842105,-0.02631578947368432
+CyberOps,Display,73,,89,,18,,0.2465753424657534,
+EML,Referral,72,6,96,9,2,-4,0.027777777777777776,-0.6944444444444444
+MTS,Referral,71,2,128,17,8,6,0.11267605633802817,2.8873239436619715
+MSAAI,Organic Social,69,30,71,25,0,0,0,
+CyberEng,Referral,67,44,64,30,0,0,0,
+Default - (not set),Unknown - tradedesk / dooh,66,5,66,5,0,0,0,
+MSITL,Referral,64,-29,111,-37,3,3,0.046875,
+"Default - business-entrepreneurship,computer-science,technology",Organic Search,63,35,58,31,0,0,0,
+MSNP,Referral,62,16,106,-7,7,5,0.11290322580645161,1.596774193548387
+CyberEng,Display,58,54,62,58,11,11,0.1896551724137931,
+MTS,Organic Social,53,27,77,49,1,1,0.018867924528301886,
+MESH,Email,53,21,74,28,8,8,0.1509433962264151,
+MSAAI,Unknown - perplexity / (not set),53,,71,,0,,0,
+MSAAI,Display,52,,57,,1,,0.019230769230769232,
+Default - (not set),Email,45,-53,51,-65,1,1,0.022222222222222223,
+MSITL,Display,44,,45,,0,,0,
+CyberOps,Email,42,16,45,13,0,0,0,
+Data Science,Display,39,,42,,2,,0.05128205128205128,
+MSNP,Email,39,10,78,29,1,0,0.02564102564102564,-0.25641025641025644
+Informatics,Email,37,-12,49,-21,1,1,0.02702702702702703,
+Default - (not set),Paid Social,35,31,49,46,0,0,0,
+MED,Unknown - chatgpt.com / (not set),34,,48,,1,,0.029411764705882353,
+MESH,Display,31,29,33,31,0,0,0,
+CyberEng,Email,31,-46,38,-42,0,0,0,
+MTS,Email,30,-9,46,7,1,1,0.03333333333333333,
+LEPSL,Organic Social,29,-17,35,-11,0,0,0,
+CyberOps,Unknown - chatgpt.com / (not set),28,,39,,0,,0,
+MSAAI,Email,26,1,49,4,1,1,0.038461538461538464,
+CyberOps,Organic Social,26,6,28,7,0,0,0,
+MSLDT,Email,24,4,35,-19,0,-3,0,-1
+"Default - business-entrepreneurship,computer-science,technology",Direct,23,-31,23,-13,0,0,0,
+MSNNL,Referral,21,6,29,-12,1,0,0.047619047619047616,-0.28571428571428575
+MESH,Organic Social,21,16,24,19,0,0,0,
+"Default - computer-science,engineering,technology",Organic Search,21,-1,56,-4,0,-1,0,-1
+MSHA,Email,19,0,29,-2,1,1,0.05263157894736842,
+LEPSL,Unknown - chatgpt.com / (not set),18,,27,,0,,0,
+MSNP,Organic Social,18,6,29,12,1,0,0.05555555555555555,-0.3333333333333333
+MSITL,Organic Social,17,6,19,4,0,0,0,
+MSLDT,Display,16,-5,17,-10,1,-3,0.0625,-0.671875
+Informatics,Unknown - Data Not Available / Data Not Available,16,1,28,10,1,-1,0.0625,-0.53125
+"Default - business-entrepreneurship,computer-science,technology",Referral,14,12,11,8,0,0,0,
+Data Science,Unknown - chatgpt.com / (not set),14,,17,,0,,0,
+Default - computer-science,Paid Social,14,,27,,15,,1.0714285714285714,
+Default - (not set),Unknown - chatgpt.com / (not set),14,,17,,0,,0,
+MSNP,Unknown - chatgpt.com / (not set),13,,16,,0,,0,
+Informatics,Organic Social,13,9,19,14,0,0,0,
+MTS,Unknown - Data Not Available / Data Not Available,13,3,23,9,1,1,0.07692307692307693,
+LEPSL,Unknown - wlle-conference / offline,13,,14,,1,,0.07692307692307693,
+Default - (not set),Organic Social,12,5,27,20,2,2,0.16666666666666666,
+MSNNL,Organic Social,12,8,14,4,2,2,0.16666666666666666,
+Data Science,Email,11,-15,11,-20,0,0,0,
+CyberOps,Unknown - perplexity / (not set),10,,11,,0,,0,
+MSLDT,Unknown - Data Not Available / Data Not Available,10,,21,,2,,0.2,
+"Default - computer-science,engineering,technology",Direct,10,-1,17,0,0,0,0,
+EML,Organic Social,9,,9,,0,,0,
+MTS,Unknown - ig / social,9,,12,,0,,0,
+MSHA,Organic Social,9,-3,9,-3,0,0,0,
+MSLDT,Unknown - perplexity / (not set),9,,9,,0,,0,
+"Default - business-entrepreneurship,computer-science,technology",Organic Social,8,,8,,0,,0,
+MSNNL,Unknown - chatgpt.com / (not set),8,,15,,0,,0,
+Default - (not set),Unknown - tradedesk / ctv,8,0,8,0,0,0,0,
+Default - (not set),Unknown - Data Not Available / Data Not Available,8,2,13,3,0,0,0,
+MED,Unknown - copilot.com / (not set),8,7,7,6,0,0,0,
+Default - business-entrepreneurship,Organic Social,8,,8,,0,,0,
+MED,Unknown - perplexity / (not set),8,,12,,0,,0,
+Data Science,Unknown - Data Not Available / Data Not Available,7,6,9,8,0,0,0,
+MSITL,Unknown - Data Not Available / Data Not Available,7,4,12,-19,0,-1,0,-1
+Default - computer-science,Paid Search,7,4,19,10,7,4,1,0
+Informatics,Unknown - chatgpt.com / (not set),7,,10,,0,,0,
+MSAAI,Unknown - msaai flyer / brochure,7,6,8,7,0,0,0,
+MSHA,Unknown - chatgpt.com / (not set),7,,10,,0,,0,
+Default - business-entrepreneurship,Organic Search,6,,5,,0,,0,
+MSAAI,Unknown - Data Not Available / Data Not Available,6,3,14,11,1,1,0.16666666666666666,
+Data Science,Unknown - blog / inlinecta,6,5,7,6,0,0,0,
+"Default - computer-science,engineering,technology",Paid Search,6,,12,,0,,0,
+"Default - business-entrepreneurship,computer-science,engineering,technology",Direct,6,1,10,-17,2,-3,0.3333333333333333,-0.6666666666666667
+MSLDT,Organic Social,6,0,6,-2,0,0,0,
+MSNNL,Email,6,-32,14,-37,0,-3,0,-1
+EML,Email,6,-4,12,2,0,0,0,
+MSLDT,Unknown - chatgpt.com / (not set),6,,7,,0,,0,
+LEPSL,Unknown - policeone / directory,6,-20,6,-30,0,-3,0,-1
+CyberOps,Unknown - Data Not Available / Data Not Available,5,3,5,1,0,0,0,
+CyberEng,Organic Social,5,-1,5,-2,0,0,0,
+MESH,Unknown - chatgpt.com / (not set),5,,8,,0,,0,
+EML,Unknown - Data Not Available / Data Not Available,5,1,8,3,0,0,0,
+Default - computer-science,Direct,5,1,4,0,0,0,0,
+MESH,Unknown - Data Not Available / Data Not Available,5,-4,16,2,0,0,0,
+MSNP,Unknown - Data Not Available / Data Not Available,5,4,7,5,1,1,0.2,
+MSHA,Display,5,,12,,3,,0.6,
+EML,Display,4,1,4,1,0,0,0,
+EML,Unknown - perplexity / (not set),4,,4,,0,,0,
+MSITL,Unknown - perplexity / (not set),4,,6,,1,,0.25,
+MSNP,Unknown - perplexity / (not set),4,,6,,0,,0,
+Default - computer-science,Organic Search,4,1,8,5,0,0,0,
+LEPSL,Unknown - event / poker-chip,4,-3,4,-18,0,0,0,
+MSNNL,Unknown - Data Not Available / Data Not Available,4,2,9,4,1,1,0.25,
+MTS,Unknown - chatgpt.com / (not set),4,,5,,0,,0,
+Default - business-entrepreneurship,Direct,4,,4,,0,,0,
+MED,Unknown - Data Not Available / Data Not Available,4,2,7,-2,0,0,0,
+MSITL,Unknown - chatgpt.com / (not set),3,,6,,0,,0,
+EML,Unknown - ig / social,3,,3,,0,,0,
+Default - (not set),Display,3,0,3,-1,0,0,0,
+CyberEng,Unknown - Data Not Available / Data Not Available,3,1,3,0,0,0,0,
+LEPSL,Unknown - fbileeda-insighter / offline,3,,5,,1,,0.3333333333333333,
+"Default - computer-science,engineering,technology",Email,3,0,4,0,0,0,0,
+CyberEng,Unknown - chatgpt.com / (not set),3,,3,,0,,0,
+Informatics,Display,3,2,6,5,0,0,0,
+MSITL,Email,3,-3,4,-5,0,0,0,
+Data Science,Unknown - perplexity / (not set),3,,3,,0,,0,
+CyberEng,Unknown - perplexity / (not set),3,,4,,0,,0,
+MSAAI,Unknown - google / demandgen,3,,3,,0,,0,
+MSHA,Unknown - Data Not Available / Data Not Available,3,2,4,2,0,0,0,
+Default - engineering,Organic Search,3,,3,,0,,0,
+MED,Unknown - zalo / zalo,3,,3,,0,,0,
+MSHA,Unknown - ig / social,2,,2,,0,,0,
+MED,Unknown - chatgpt.com / organic,2,,2,,0,,0,
+EML,Unknown - chatgpt.com / (not set),2,,2,,0,,0,
+LEPSL,Unknown - aocds-courier / offline,2,1,2,-1,0,-1,0,-1
+Default - computer-science,Unknown - perplexity / (not set),2,,2,,0,,0,
+MSHA,Unknown - perplexity / (not set),2,,2,,0,,0,
+MED,Unknown - openai / (not set),2,,8,,0,,0,
+"Default - engineering,healthcare,sustainability",Organic Search,2,,2,,0,,0,
+"Default - engineering,healthcare,sustainability",Direct,2,-1,2,-1,0,0,0,
+LEPSL,Unknown - Data Not Available / Data Not Available,2,1,7,6,0,0,0,
+"Default - business-entrepreneurship,healthcare",Direct,2,,2,,0,,0,
+LEPSL,Unknown - perplexity / (not set),2,,2,,0,,0,
+Default - (not set),Unknown - fbileeda-insighter / offline,1,,1,,0,,0,
+CyberOps,Unknown - pandora / cpc,1,,1,,0,,0,
+MSHA,Unknown - linkedin / social,1,,1,,0,,0,
+MED,Display,1,,1,,0,,0,
+MSHA,Unknown - copilot.com / (not set),1,,1,,0,,0,
+MTS,Unknown - youtube / video,1,,1,,0,,0,
+MTS,Unknown - perplexity / (not set),1,,1,,0,,0,
+CyberEng,Unknown - hackgd-conference-table / offline,1,,1,,1,,1,
+MESH,Unknown - blog / (not set),1,,1,,0,,0,
+MESH,Affiliate,1,-6,1,-11,0,0,0,
+CyberOps,Unknown - copilot.com / (not set),1,,1,,0,,0,
+Informatics,Unknown - {{site_source_name}} / {{placement}},1,-1,1,-1,0,0,0,
+MSLDT,Unknown - copilot.com / (not set),1,,1,,0,,0,
+Default - computer-science,Referral,1,,1,,0,,0,
+Data Science,Unknown - msads flyer / brochure,1,,1,,0,,0,
+"Default - computer-science,engineering,technology",Display,1,,1,,0,,0,
+LEPSL,Unknown - cpca-magazine / offline,1,,1,,0,,0,
+LEPSL,Unknown - copilot.com / (not set),1,,1,,0,,0,
+Default - (not set),Unknown - perplexity / (not set),1,,1,,0,,0,
+Default - humanitarian-nonprofit,Direct,1,,1,,0,,0,
+Informatics,Unknown - perplexity / (not set),1,,1,,0,,0,
+"Default - business-entrepreneurship,computer-science,technology",Unknown - chatgpt.com / (not set),1,,1,,0,,0,
+MSNNL,Unknown - perplexity / (not set),1,,2,,0,,0,
+LEPSL,Unknown - Facebook / cpc,1,,1,,0,,0,
+Data Science,Organic Social,1,-1,1,-1,0,0,0,
+MSAAI,Unknown - copilot.com / (not set),1,0,1,0,0,0,0,
+"Default - business-entrepreneurship,computer-science,engineering,technology",Paid Social,1,,4,,1,,1,
