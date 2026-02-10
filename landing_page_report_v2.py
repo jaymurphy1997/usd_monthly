@@ -69,7 +69,7 @@ def sort_by_program_order(data: pd.DataFrame) -> pd.DataFrame:
         ordered=True
     )
     # Sort by program_category and default_channel
-    return data.sort_values(['program_category', 'default_channel']).reset_index(drop=True)
+    return data.sort_values(['program_category', 'default_channel']).reset_index()
 
 
 def summarize_data(mom_data: pd.DataFrame, yoy_data: pd.DataFrame) -> pd.DataFrame:
