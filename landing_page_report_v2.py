@@ -55,9 +55,15 @@ def filter_channels(data: pd.DataFrame, channels: List[str]) -> pd.DataFrame:
 def get_top_pages(data: pd.DataFrame, group_cols: List[str],
                   metric: str, top_n: int = 3) -> pd.DataFrame:
     """Get top N pages by metric for each program and channel combination."""
-    return (data.groupby(group_cols)
-            .apply(lambda x: x.nlargest(top_n, metric), include_groups=False)
-            .reset_index(drop=True))
+    result = (data.groupby(group_cols)
+              .apply(lambda x: x.nlargest(top_n, metric), include_groups=False)
+              .reset_index())
+    # Drop the extra level index column created by groupby apply
+    if 'level_2' in result.columns:
+        result = result.drop(columns=['level_2'])
+    elif 'level_1' in result.columns:
+        result = result.drop(columns=['level_1'])
+    return result
 
 
 def sort_by_program_order(data: pd.DataFrame) -> pd.DataFrame:
