@@ -134,7 +134,7 @@ def generate_markdown(data: pd.DataFrame, output_file: str) -> None:
             
             # Group by channel
             for channel in program_data['default_channel'].unique():
-                channel_data = program_data[program_data['default_channel'] == channel]
+                channel_data = program_data[program_data['default_channel'] == channel].sort_values('Session_mom', ascending=False)
                 
                 f.write(f"#### **{channel}**\n\n")
                 
