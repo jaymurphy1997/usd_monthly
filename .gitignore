@@ -1,0 +1,20 @@
+# Python virtual environment
+.venv/
+venv/
+
+# Python caches
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Logs
+*.log
+
+# Service account credentials — never commit
+*service-account*.json
+*credentials*.json
+.env
+
+# Generated reports — contain real USD analytics data; this repo is PUBLIC.
+# Ignored by default so live data isn't published. Remove this line to track them.
+reports/

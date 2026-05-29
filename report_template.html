@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>USD Online Monthly Report — {{MONTH_NAME}} {{YEAR}}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sofia+Sans+Extra+Condensed:wght@700&family=Sofia+Sans:wght@400;600;700&family=Spectral:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --founders: #003b70;
+    --immaculata: #0074c8;
+    --torero: #75bee9;
+    --agave: #00a4b3;
+    --poppy: #f2650d;
+    --sagebrush: #6aa14a;
+    --yarrow: #f1bb55;
+    --terraza: #aead9e;
+    --plaza: #7e7e81;
+    --red: #c0392b;
+    --bg: #f8f7f5;
+    --card: #ffffff;
+    --border: #e0ddd8;
+    --grid: #e8e6e1;
+    --pos-bg: #e8f5e9;
+    --pos-fg: #2e7d32;
+    --neg-bg: #fdecea;
+    --neg-fg: #c0392b;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: #2b2b2b;
+    font-family: 'Spectral', Georgia, serif;
+    font-size: 15px;
+    line-height: 1.55;
+  }
+  h1, h2, h3, h4 { font-family: 'Sofia Sans Extra Condensed', 'Sofia Sans', sans-serif; font-weight: 700; color: var(--founders); margin: 0; line-height: 1.1; }
+  .ui { font-family: 'Sofia Sans', sans-serif; font-weight: 600; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 22px; }
+
+  /* Header */
+  header.report {
+    background: var(--founders);
+    color: #fff;
+    border-bottom: 4px solid var(--red);
+    padding: 34px 0 28px;
+  }
+  header.report h1 { color: #fff; font-size: 46px; letter-spacing: .5px; }
+  header.report .sub { font-family: 'Sofia Sans', sans-serif; font-weight: 600; color: var(--torero); font-size: 18px; margin-top: 6px; }
+  header.report .meta { font-family: 'Sofia Sans', sans-serif; font-size: 13px; color: #cfe3f3; margin-top: 14px; }
+  header.report .brand { float: right; font-family: 'Sofia Sans Extra Condensed', sans-serif; font-size: 26px; color: var(--torero); }
+
+  /* Sticky jump nav */
+  nav.jump {
+    position: sticky; top: 0; z-index: 50;
+    background: #fff; border-bottom: 1px solid var(--border);
+    box-shadow: 0 1px 4px rgba(0,0,0,.04);
+  }
+  nav.jump .wrap { display: flex; flex-wrap: wrap; gap: 4px 14px; padding-top: 10px; padding-bottom: 10px; }
+  nav.jump a {
+    font-family: 'Sofia Sans', sans-serif; font-weight: 600; font-size: 12.5px;
+    color: var(--founders); text-decoration: none; padding: 3px 7px; border-radius: 3px;
+  }
+  nav.jump a:hover { background: #eef4fa; color: var(--immaculata); }
+
+  /* Sections */
+  section { margin: 30px 0; }
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 4px; padding: 22px 24px; margin-bottom: 22px;
+  }
+  .section-head { border-top: 3px solid var(--founders); padding-top: 14px; margin-bottom: 8px; }
+  .section-head h2 { font-size: 30px; }
+  .section-head .desc { font-size: 14px; color: #555; margin-top: 4px; }
+
+  /* KPI cards */
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(168px, 1fr)); gap: 14px; margin: 18px 0; }
+  .kpi {
+    background: #fff; border: 1px solid var(--border); border-top: 3px solid var(--founders);
+    border-radius: 4px; padding: 14px 16px;
+  }
+  .kpi.accent-agave { border-top-color: var(--agave); }
+  .kpi.accent-sage { border-top-color: var(--sagebrush); }
+  .kpi.accent-immac { border-top-color: var(--immaculata); }
+  .kpi .label { font-family: 'Sofia Sans', sans-serif; font-weight: 600; font-size: 11px; letter-spacing: .6px; text-transform: uppercase; color: var(--plaza); }
+  .kpi .value { font-family: 'Sofia Sans Extra Condensed', sans-serif; font-size: 34px; color: var(--founders); margin: 2px 0 4px; }
+  .kpi .badges { display: flex; gap: 8px; flex-wrap: wrap; }
+  .kpi .badges .lab { font-family: 'Sofia Sans', sans-serif; font-size: 11px; color: var(--plaza); display: inline-flex; align-items: center; gap: 4px; }
+
+  /* Badges (delta pills) */
+  .pill {
+    display: inline-block; font-family: 'Sofia Sans', sans-serif; font-weight: 600;
+    font-size: 11.5px; padding: 1px 7px; border-radius: 10px; white-space: nowrap;
+  }
+  .pill.pos { background: var(--pos-bg); color: var(--pos-fg); }
+  .pill.neg { background: var(--neg-bg); color: var(--neg-fg); }
+  .pill.flat { background: #eef0f2; color: var(--plaza); }
+
+  /* Channel badge */
+  .chan { display: inline-block; font-family: 'Sofia Sans', sans-serif; font-weight: 600; font-size: 11.5px; padding: 2px 8px; border-radius: 4px; background: #eceff1; color: #455a64; }
+
+  /* Tables */
+  .table-wrap { overflow-x: auto; }
+  .table-tools { display: flex; justify-content: space-between; align-items: center; margin: 6px 0 8px; }
+  .table-tools h4 { font-size: 18px; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  thead.grouped th { background: var(--founders); color: #fff; font-family: 'Sofia Sans', sans-serif; font-weight: 600; }
+  th { text-align: right; padding: 7px 10px; border-bottom: 1px solid var(--border); font-family: 'Sofia Sans', sans-serif; font-weight: 600; color: var(--founders); }
+  th.grp { text-align: center; border-left: 1px solid rgba(255,255,255,.25); }
+  th.sortable { cursor: pointer; user-select: none; background: #f0eee9; }
+  th.sortable:hover { background: #e7e4dd; }
+  th.sortable .arrow { color: var(--immaculata); font-size: 10px; }
+  th:first-child, td:first-child { text-align: left; }
+  td { padding: 6px 10px; border-bottom: 1px solid #efeee9; font-family: 'Sofia Sans', sans-serif; font-size: 12.5px; }
+  tbody tr:hover { background: #faf9f6; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .url { font-family: 'Consolas', 'SF Mono', monospace; font-size: 11.5px; color: #444; }
+
+  .btn {
+    font-family: 'Sofia Sans', sans-serif; font-weight: 600; font-size: 12px;
+    color: var(--founders); background: #fff; border: 1px solid var(--border);
+    border-radius: 4px; padding: 4px 11px; cursor: pointer;
+  }
+  .btn:hover { background: #eef4fa; border-color: var(--immaculata); }
+
+  .charts-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin: 16px 0; }
+  .chart-box { background: #fff; border: 1px solid var(--border); border-radius: 4px; padding: 14px 16px; }
+  .chart-box h4 { font-size: 16px; margin-bottom: 6px; }
+  .chart-holder { position: relative; height: 300px; }
+  .chart-holder.tall { height: 460px; }
+
+  .insights { border-left: 3px solid var(--red); background: #fff; padding: 12px 16px; margin: 16px 0; border-radius: 0 4px 4px 0; }
+  .insights h4 { color: var(--red); font-size: 17px; margin-bottom: 4px; }
+  .insights ul { margin: 4px 0 0; padding-left: 18px; }
+  .insights li { margin: 3px 0; font-size: 13.5px; }
+
+  .program-head { display: flex; align-items: baseline; gap: 12px; }
+  .program-head .code { font-family: 'Sofia Sans', sans-serif; font-weight: 600; font-size: 12px; color: #fff; background: var(--immaculata); padding: 2px 9px; border-radius: 4px; }
+  footer { text-align: center; color: var(--plaza); font-family: 'Sofia Sans', sans-serif; font-size: 12px; padding: 30px 0 50px; }
+  @media (max-width: 820px) { .charts-2 { grid-template-columns: 1fr; } header.report h1 { font-size: 34px; } }
+</style>
+</head>
+<body>
+
+<header class="report">
+  <div class="wrap">
+    <span class="brand">TRIONIA</span>
+    <h1>USD Online Performance Report</h1>
+    <div class="sub">University of San Diego — Online Graduate Programs</div>
+    <div class="meta">{{MONTH_NAME}} {{YEAR}} &nbsp;•&nbsp; {{MONTH_DAYS}} days &nbsp;•&nbsp; Generated {{REPORT_DATE}}</div>
+  </div>
+</header>
+
+<nav class="jump">
+  <div class="wrap" id="jumpNav"></div>
+</nav>
+
+<div class="wrap">
+
+  <!-- School-wide -->
+  <section id="schoolwide">
+    <div class="section-head">
+      <h2>School-Wide Channel Performance</h2>
+      <div class="desc">All sessions and conversions across every program, grouped by GA4 default channel.</div>
+    </div>
+    <div class="card">
+      <div class="table-tools">
+        <h4>Channels</h4>
+        <button class="btn" onclick="exportCSV('swTable','schoolwide_channels')">Export CSV</button>
+      </div>
+      <div class="table-wrap"><table id="swTable"></table></div>
+    </div>
+    <div class="charts-2">
+      <div class="chart-box"><h4>Sessions by Channel</h4><div class="chart-holder"><canvas id="swSessChart"></canvas></div></div>
+      <div class="chart-box"><h4>Conversions by Channel</h4><div class="chart-holder"><canvas id="swConvChart"></canvas></div></div>
+    </div>
+  </section>
+
+  <!-- Portfolio -->
+  <section id="portfolio">
+    <div class="section-head">
+      <h2>Portfolio Overview</h2>
+      <div class="desc">All 15 reporting programs compared on sessions, conversions, and conversion rate.</div>
+    </div>
+    <div class="card">
+      <div class="table-tools">
+        <h4>Program Comparison</h4>
+        <button class="btn" onclick="exportCSV('portfolioTable','portfolio_overview')">Export CSV</button>
+      </div>
+      <div class="table-wrap"><table id="portfolioTable"></table></div>
+    </div>
+    <div class="charts-2">
+      <div class="chart-box"><h4>Sessions by Program</h4><div class="chart-holder tall"><canvas id="pfSessChart"></canvas></div></div>
+      <div class="chart-box"><h4>Conversions by Program</h4><div class="chart-holder tall"><canvas id="pfConvChart"></canvas></div></div>
+    </div>
+    <div class="chart-box">
+      <h4>Sessions vs. Conversion Rate (bubble size = conversions)</h4>
+      <div class="chart-holder tall"><canvas id="pfBubble"></canvas></div>
+    </div>
+  </section>
+
+  <!-- Per-program sections injected here -->
+  <div id="programSections"></div>
+
+</div>
+
+<footer>
+  Prepared by Trionia Analytics for the University of San Diego — {{MONTH_NAME}} {{YEAR}}.
+  Sessions attributed via <code>program_category</code>; conversions via <code>lead_program</code>.
+</footer>
+
+<script>
+/* ===================== Injected data ===================== */
+const PROGRAMS = {{PROGRAMS_JSON}};
+const SCHOOL_WIDE = {{SCHOOL_WIDE_JSON}};
+const MONTH_NAME = "{{MONTH_NAME}}";
+const MONTH_LC = "{{MONTH_LC}}";
+const YEAR = "{{YEAR}}";
+
+/* ===================== Palette & helpers ===================== */
+const PALETTE = ['#003b70','#0074c8','#75bee9','#00a4b3','#f2650d','#6aa14a','#f1bb55','#aead9e','#7e7e81','#c0392b'];
+const CHANNEL_BADGES = {
+  'Organic Search': ['#e3f2fd','#1565c0'],
+  'Paid Search':    ['#fff3e0','#e65100'],
+  'Paid Social':    ['#e8f5e9','#2e7d32'],
+  'Email':          ['#fce4ec','#c62828'],
+  'Display':        ['#f3e5f5','#7b1fa2'],
+  'Direct':         ['#eceff1','#455a64'],
+  'Referral':       ['#fff8e1','#f57f17']
+};
+
+const fmt = n => (n === null || n === undefined || isNaN(n)) ? '—' : Number(n).toLocaleString('en-US');
+const fmtPct = n => (n === null || n === undefined || isNaN(n)) ? '—' : (n >= 0 ? '+' : '') + Number(n).toFixed(1) + '%';
+const fmtRate = n => (n === null || n === undefined || isNaN(n)) ? '—' : Number(n).toFixed(2) + '%';
+const fmtDelta = n => (n === null || n === undefined || isNaN(n)) ? '—' : (n >= 0 ? '+' : '') + Number(n).toLocaleString('en-US');
+
+function pctPill(n) {
+  if (n === null || n === undefined || isNaN(n)) return '<span class="pill flat">—</span>';
+  const cls = n > 0 ? 'pos' : (n < 0 ? 'neg' : 'flat');
+  const arr = n > 0 ? '▲' : (n < 0 ? '▼' : '–');
+  return `<span class="pill ${cls}">${arr} ${fmtPct(n)}</span>`;
+}
+function deltaPill(n) {
+  if (n === null || n === undefined || isNaN(n)) return '<span class="pill flat">—</span>';
+  const cls = n > 0 ? 'pos' : (n < 0 ? 'neg' : 'flat');
+  const arr = n > 0 ? '▲' : (n < 0 ? '▼' : '–');
+  return `<span class="pill ${cls}">${arr} ${fmtDelta(n)}</span>`;
+}
+function chanBadge(ch) {
+  const [bg, fg] = CHANNEL_BADGES[ch] || ['#eceff1', '#455a64'];
+  return `<span class="chan" style="background:${bg};color:${fg}">${ch}</span>`;
+}
+
+/* ===================== Chart.js global style (Economist/McKinsey) ===================== */
+Chart.defaults.font.family = "'Sofia Sans', sans-serif";
+Chart.defaults.font.size = 11;
+Chart.defaults.color = '#4a4a4a';
+Chart.defaults.plugins.legend.display = false;
+Chart.defaults.plugins.tooltip.backgroundColor = '#003b70';
+Chart.defaults.plugins.tooltip.cornerRadius = 2;
+Chart.defaults.plugins.tooltip.padding = 10;
+Chart.defaults.plugins.tooltip.titleFont = { family: "'Sofia Sans', sans-serif", weight: '600' };
+
+const AXIS = {
+  grid: { color: '#e8e6e1', lineWidth: 0.5, drawBorder: false },
+  border: { display: false },
+  ticks: { color: '#4a4a4a' }
+};
+function hBarOpts(valueFmt) {
+  return {
+    indexAxis: 'y',
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { tooltip: { callbacks: { label: c => ' ' + (valueFmt ? valueFmt(c.parsed.x) : c.parsed.x) } } },
+    scales: { x: { ...AXIS, beginAtZero: true }, y: { ...AXIS, grid: { display: false } } }
+  };
+}
+
+/* ===================== Jump nav ===================== */
+(function buildNav() {
+  const nav = document.getElementById('jumpNav');
+  const links = [
+    ['#schoolwide', 'School-Wide'],
+    ['#portfolio', 'Portfolio']
+  ].concat(PROGRAMS.map(p => ['#prog-' + p.id, p.short]));
+  nav.innerHTML = links.map(([href, label]) => `<a href="${href}">${label}</a>`).join('');
+})();
+
+/* ===================== School-wide table ===================== */
+(function renderSchoolWide() {
+  const head = `
+    <thead class="grouped">
+      <tr>
+        <th rowspan="2" class="sortable" data-col="0" data-type="text">Channel <span class="arrow"></span></th>
+        <th colspan="3" class="grp">Sessions</th>
+        <th colspan="3" class="grp">Conversions</th>
+        <th rowspan="2" class="grp sortable" data-col="7" data-type="num">Conv Rate <span class="arrow"></span></th>
+      </tr>
+      <tr>
+        <th class="grp sortable" data-col="1" data-type="num">Total <span class="arrow"></span></th>
+        <th class="grp sortable" data-col="2" data-type="num">MoM <span class="arrow"></span></th>
+        <th class="grp sortable" data-col="3" data-type="num">YoY <span class="arrow"></span></th>
+        <th class="grp sortable" data-col="4" data-type="num">Total <span class="arrow"></span></th>
+        <th class="grp sortable" data-col="5" data-type="num">MoM <span class="arrow"></span></th>
+        <th class="grp sortable" data-col="6" data-type="num">YoY <span class="arrow"></span></th>
+      </tr>
+    </thead>`;
+  const rows = SCHOOL_WIDE.map(r => `
+    <tr>
+      <td>${chanBadge(r.channel)}</td>
+      <td class="num" data-sort="${r.sessions}">${fmt(r.sessions)}</td>
+      <td class="num" data-sort="${r.momSess ?? -1e15}">${deltaPill(r.momSessDelta)}<br>${pctPill(r.momSess)}</td>
+      <td class="num" data-sort="${r.yoySess ?? -1e15}">${deltaPill(r.yoySessDelta)}<br>${pctPill(r.yoySess)}</td>
+      <td class="num" data-sort="${r.conversions}">${fmt(r.conversions)}</td>
+      <td class="num" data-sort="${r.momConv ?? -1e15}">${deltaPill(r.momConvDelta)}<br>${pctPill(r.momConv)}</td>
+      <td class="num" data-sort="${r.yoyConv ?? -1e15}">${deltaPill(r.yoyConvDelta)}<br>${pctPill(r.yoyConv)}</td>
+      <td class="num" data-sort="${r.convRate ?? -1}">${fmtRate(r.convRate)}</td>
+    </tr>`).join('');
+  document.getElementById('swTable').innerHTML = head + '<tbody>' + rows + '</tbody>';
+  makeSortable('swTable');
+})();
+
+/* ===================== Portfolio table ===================== */
+(function renderPortfolio() {
+  const head = `
+    <thead class="grouped">
+      <tr>
+        <th rowspan="2" class="sortable" data-col="0" data-type="text">Program <span class="arrow"></span></th>
+        <th colspan="3" class="grp">Sessions</th>
+        <th colspan="3" class="grp">Conversions</th>
+        <th rowspan="2" class="grp sortable" data-col="7" data-type="num">Conv Rate <span class="arrow"></span></th>
+      </tr>
+      <tr>
+        <th class="grp sortable" data-col="1" data-type="num">Total <span class="arrow"></span></th>
+        <th class="grp sortable" data-col="2" data-type="num">MoM <span class="arrow"></span></th>
+        <th class="grp sortable" data-col="3" data-type="num">YoY <span class="arrow"></span></th>
+        <th class="grp sortable" data-col="4" data-type="num">Total <span class="arrow"></span></th>
+        <th class="grp sortable" data-col="5" data-type="num">MoM <span class="arrow"></span></th>
+        <th class="grp sortable" data-col="6" data-type="num">YoY <span class="arrow"></span></th>
+      </tr>
+    </thead>`;
+  const rows = PROGRAMS.map(p => `
+    <tr>
+      <td><a href="#prog-${p.id}" style="color:var(--founders);text-decoration:none;font-weight:600">${p.name}</a></td>
+      <td class="num" data-sort="${p.sessions}">${fmt(p.sessions)}</td>
+      <td class="num" data-sort="${p.momSess ?? -1e15}">${pctPill(p.momSess)}</td>
+      <td class="num" data-sort="${p.yoySess ?? -1e15}">${pctPill(p.yoySess)}</td>
+      <td class="num" data-sort="${p.conversions}">${fmt(p.conversions)}</td>
+      <td class="num" data-sort="${p.momConv ?? -1e15}">${pctPill(p.momConv)}</td>
+      <td class="num" data-sort="${p.yoyConv ?? -1e15}">${pctPill(p.yoyConv)}</td>
+      <td class="num" data-sort="${p.convRate ?? -1}">${fmtRate(p.convRate)}</td>
+    </tr>`).join('');
+  document.getElementById('portfolioTable').innerHTML = head + '<tbody>' + rows + '</tbody>';
+  makeSortable('portfolioTable');
+})();
+
+/* ===================== Charts ===================== */
+function barData(labels, values, label) {
+  return {
+    labels,
+    datasets: [{ label, data: values, backgroundColor: labels.map((_, i) => PALETTE[i % PALETTE.length]), borderRadius: 2, barPercentage: 0.65, categoryPercentage: 0.78 }]
+  };
+}
+
+new Chart(document.getElementById('swSessChart'), { type: 'bar', data: barData(SCHOOL_WIDE.map(r => r.channel), SCHOOL_WIDE.map(r => r.sessions), 'Sessions'), options: hBarOpts(fmt) });
+new Chart(document.getElementById('swConvChart'), { type: 'bar', data: barData(SCHOOL_WIDE.map(r => r.channel), SCHOOL_WIDE.map(r => r.conversions), 'Conversions'), options: hBarOpts(fmt) });
+
+const pfSorted = [...PROGRAMS].sort((a, b) => b.sessions - a.sessions);
+new Chart(document.getElementById('pfSessChart'), { type: 'bar', data: barData(pfSorted.map(p => p.short), pfSorted.map(p => p.sessions), 'Sessions'), options: hBarOpts(fmt) });
+const pfConvSorted = [...PROGRAMS].sort((a, b) => b.conversions - a.conversions);
+new Chart(document.getElementById('pfConvChart'), { type: 'bar', data: barData(pfConvSorted.map(p => p.short), pfConvSorted.map(p => p.conversions), 'Conversions'), options: hBarOpts(fmt) });
+
+/* Bubble: X = sessions, Y = conv rate, r = conversions */
+(function bubble() {
+  const maxConv = Math.max(1, ...PROGRAMS.map(p => p.conversions));
+  const points = PROGRAMS.map((p, i) => ({
+    x: p.sessions, y: p.convRate || 0,
+    r: 6 + Math.sqrt(p.conversions / maxConv) * 28,
+    _p: p, backgroundColor: PALETTE[i % PALETTE.length]
+  }));
+  new Chart(document.getElementById('pfBubble'), {
+    type: 'bubble',
+    data: { datasets: points.map(pt => ({ label: pt._p.short, data: [pt], backgroundColor: pt.backgroundColor + 'cc', borderColor: pt.backgroundColor })) },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true, position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } },
+        tooltip: { callbacks: { label: c => {
+          const p = c.raw._p;
+          return [`${p.name}`, `Sessions: ${fmt(p.sessions)}`, `Conv Rate: ${fmtRate(p.convRate)}`, `Conversions: ${fmt(p.conversions)}`];
+        } } }
+      },
+      scales: {
+        x: { ...AXIS, title: { display: true, text: 'Sessions' }, beginAtZero: true },
+        y: { ...AXIS, title: { display: true, text: 'Conversion Rate (%)' }, beginAtZero: true }
+      }
+    }
+  });
+})();
+
+/* ===================== Per-program sections ===================== */
+(function renderPrograms() {
+  const container = document.getElementById('programSections');
+  PROGRAMS.forEach(p => {
+    const sec = document.createElement('section');
+    sec.id = 'prog-' + p.id;
+    sec.innerHTML = `
+      <div class="section-head">
+        <div class="program-head"><h2>${p.name}</h2><span class="code">${p.code}</span></div>
+        <div class="desc">${p.short} — channel and landing-page performance for ${MONTH_NAME} ${YEAR}.</div>
+      </div>
+      <div class="kpi-grid">
+        <div class="kpi">
+          <div class="label">Sessions</div><div class="value">${fmt(p.sessions)}</div>
+          <div class="badges"><span class="lab">MoM ${pctPill(p.momSess)}</span><span class="lab">YoY ${pctPill(p.yoySess)}</span></div>
+        </div>
+        <div class="kpi accent-immac">
+          <div class="label">Conversions</div><div class="value">${fmt(p.conversions)}</div>
+          <div class="badges"><span class="lab">MoM ${pctPill(p.momConv)}</span><span class="lab">YoY ${pctPill(p.yoyConv)}</span></div>
+        </div>
+        <div class="kpi accent-agave">
+          <div class="label">Conv Rate</div><div class="value">${fmtRate(p.convRate)}</div>
+          <div class="badges"><span class="lab">MoM ${pctPill(p.momCR)}</span></div>
+        </div>
+        <div class="kpi">
+          <div class="label">Top Channel</div><div class="value" style="font-size:24px">${p.topChannel}</div>
+        </div>
+        <div class="kpi accent-sage">
+          <div class="label">Sales Ready</div><div class="value">${fmt(p.salesReady)}</div>
+        </div>
+        <div class="kpi accent-agave">
+          <div class="label">Early Stage</div><div class="value">${fmt(p.earlyStage)}</div>
+        </div>
+      </div>
+      <div class="charts-2">
+        <div class="chart-box"><h4>Sessions by Channel</h4><div class="chart-holder"><canvas id="c-sess-${p.id}"></canvas></div></div>
+        <div class="chart-box"><h4>Conversions by Channel</h4><div class="chart-holder"><canvas id="c-conv-${p.id}"></canvas></div></div>
+      </div>
+      <div class="card">
+        <div class="table-tools"><h4>Channel Detail</h4>
+          <button class="btn" onclick="exportCSV('tbl-chan-${p.id}','${p.id}_channels')">Export CSV</button></div>
+        <div class="table-wrap"><table id="tbl-chan-${p.id}"></table></div>
+      </div>
+      <div class="insights">
+        <h4>Key Insights</h4>
+        <ul>${buildInsights(p)}</ul>
+      </div>
+      <div class="card">
+        <div class="table-tools"><h4>Top Landing Pages</h4>
+          <button class="btn" onclick="exportCSV('tbl-lp-${p.id}','${p.id}_landing_pages')">Export CSV</button></div>
+        <div class="table-wrap"><table id="tbl-lp-${p.id}"></table></div>
+      </div>`;
+    container.appendChild(sec);
+
+    /* Channel detail table (grouped headers) */
+    const chanHead = `
+      <thead class="grouped">
+        <tr>
+          <th rowspan="2" class="sortable" data-col="0" data-type="text">Channel <span class="arrow"></span></th>
+          <th colspan="2" class="grp">Sessions</th>
+          <th colspan="2" class="grp">Conversions</th>
+        </tr>
+        <tr>
+          <th class="grp sortable" data-col="1" data-type="num">Total <span class="arrow"></span></th>
+          <th class="grp sortable" data-col="2" data-type="num">MoM Δ <span class="arrow"></span></th>
+          <th class="grp sortable" data-col="3" data-type="num">Total <span class="arrow"></span></th>
+          <th class="grp sortable" data-col="4" data-type="num">MoM Δ <span class="arrow"></span></th>
+        </tr>
+      </thead>`;
+    const chanRows = p.channelDetails.map(d => `
+      <tr>
+        <td>${chanBadge(d.channel)}</td>
+        <td class="num" data-sort="${d.sessions}">${fmt(d.sessions)}</td>
+        <td class="num" data-sort="${d.momSessDelta}">${deltaPill(d.momSessDelta)}</td>
+        <td class="num" data-sort="${d.conversions}">${fmt(d.conversions)}</td>
+        <td class="num" data-sort="${d.momConvDelta}">${deltaPill(d.momConvDelta)}</td>
+      </tr>`).join('');
+    document.getElementById('tbl-chan-' + p.id).innerHTML = chanHead + '<tbody>' + (chanRows || '<tr><td colspan="5">No channel data.</td></tr>') + '</tbody>';
+    makeSortable('tbl-chan-' + p.id);
+
+    /* Landing page table */
+    const lpHead = `
+      <thead class="grouped">
+        <tr>
+          <th class="sortable" data-col="0" data-type="text">Channel <span class="arrow"></span></th>
+          <th class="sortable" data-col="1" data-type="text">Landing Page <span class="arrow"></span></th>
+          <th class="sortable" data-col="2" data-type="num">Sessions <span class="arrow"></span></th>
+          <th class="sortable" data-col="3" data-type="num">MoM Δ <span class="arrow"></span></th>
+          <th class="sortable" data-col="4" data-type="num">Conversions <span class="arrow"></span></th>
+          <th class="sortable" data-col="5" data-type="num">MoM Δ <span class="arrow"></span></th>
+        </tr>
+      </thead>`;
+    const lpRows = p.landingPages.map(lp => `
+      <tr>
+        <td>${chanBadge(lp.channel)}</td>
+        <td><span class="url">${lp.url}</span></td>
+        <td class="num" data-sort="${lp.sessions}">${fmt(lp.sessions)}</td>
+        <td class="num" data-sort="${lp.momSess}">${deltaPill(lp.momSess)}</td>
+        <td class="num" data-sort="${lp.conversions}">${fmt(lp.conversions)}</td>
+        <td class="num" data-sort="${lp.momConv}">${deltaPill(lp.momConv)}</td>
+      </tr>`).join('');
+    document.getElementById('tbl-lp-' + p.id).innerHTML = lpHead + '<tbody>' + (lpRows || '<tr><td colspan="6">No landing-page data.</td></tr>') + '</tbody>';
+    makeSortable('tbl-lp-' + p.id);
+
+    /* Charts */
+    const labels = p.channels.labels;
+    if (labels.length) {
+      new Chart(document.getElementById('c-sess-' + p.id), { type: 'bar', data: barData(labels, p.channels.sessions, 'Sessions'), options: hBarOpts(fmt) });
+      new Chart(document.getElementById('c-conv-' + p.id), { type: 'bar', data: barData(labels, p.channels.conversions, 'Conversions'), options: hBarOpts(fmt) });
+    }
+  });
+})();
+
+function buildInsights(p) {
+  const items = [];
+  if (p.momSess !== null && p.momSess !== undefined) {
+    const dir = p.momSess >= 0 ? 'rose' : 'fell';
+    items.push(`Sessions ${dir} <strong>${fmtPct(p.momSess)}</strong> month-over-month (${fmt(p.sessions)} total), with <strong>${p.topChannel}</strong> as the leading channel.`);
+  } else {
+    items.push(`<strong>${fmt(p.sessions)}</strong> sessions this month, led by <strong>${p.topChannel}</strong>.`);
+  }
+  if (p.yoySess !== null && p.yoySess !== undefined) {
+    items.push(`Year-over-year traffic is ${p.yoySess >= 0 ? 'up' : 'down'} <strong>${fmtPct(p.yoySess)}</strong>.`);
+  }
+  items.push(`Converted <strong>${fmt(p.conversions)}</strong> leads at a <strong>${fmtRate(p.convRate)}</strong> conversion rate (MoM ${fmtPct(p.momConv)}).`);
+  items.push(`Pipeline mix: <strong>${fmt(p.salesReady)}</strong> Sales Ready and <strong>${fmt(p.earlyStage)}</strong> Early Stage.`);
+  return items.map(i => `<li>${i}</li>`).join('');
+}
+
+/* ===================== Sortable tables ===================== */
+function makeSortable(tableId) {
+  const table = document.getElementById(tableId);
+  const headers = table.querySelectorAll('th.sortable');
+  headers.forEach(th => {
+    th.addEventListener('click', () => {
+      const col = parseInt(th.dataset.col, 10);
+      const type = th.dataset.type || 'num';
+      const asc = th.dataset.dir !== 'asc';
+      // reset arrows
+      table.querySelectorAll('th.sortable .arrow').forEach(a => a.textContent = '');
+      table.querySelectorAll('th.sortable').forEach(h => delete h.dataset.dir);
+      th.dataset.dir = asc ? 'asc' : 'desc';
+      const arrowSpan = th.querySelector('.arrow');
+      if (arrowSpan) arrowSpan.textContent = asc ? '▲' : '▼';
+
+      const tbody = table.querySelector('tbody');
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+      rows.sort((ra, rb) => {
+        const a = cellSortValue(ra.children[col], type);
+        const b = cellSortValue(rb.children[col], type);
+        if (a < b) return asc ? -1 : 1;
+        if (a > b) return asc ? 1 : -1;
+        return 0;
+      });
+      rows.forEach(r => tbody.appendChild(r));
+    });
+  });
+}
+function cellSortValue(td, type) {
+  if (!td) return type === 'num' ? -Infinity : '';
+  if (td.dataset.sort !== undefined) {
+    const v = parseFloat(td.dataset.sort);
+    return isNaN(v) ? -Infinity : v;
+  }
+  const text = (td.textContent || '').trim();
+  if (type === 'num') {
+    const cleaned = text.replace(/[▲▼–%+,\s]/g, '');
+    const v = parseFloat(cleaned);
+    return isNaN(v) ? -Infinity : v;
+  }
+  return text.toLowerCase();
+}
+
+/* ===================== CSV export ===================== */
+function exportCSV(tableId, baseName) {
+  const table = document.getElementById(tableId);
+  const rows = [];
+  // Build header from the LAST header row (the leaf columns) + first-row group context.
+  const headerRows = table.querySelectorAll('thead tr');
+  // Use data cells' column count to derive headers from leaf header row.
+  const leaf = headerRows[headerRows.length - 1];
+  const headers = [];
+  // If there is a grouped header, prefix group label to leaf labels.
+  if (headerRows.length === 2) {
+    const groups = [];
+    headerRows[0].querySelectorAll('th').forEach(th => {
+      const span = parseInt(th.getAttribute('colspan') || '1', 10);
+      const rspan = parseInt(th.getAttribute('rowspan') || '1', 10);
+      const label = cleanHeader(th.textContent);
+      if (rspan === 2) { groups.push({ label, leaf: true }); }
+      else { for (let i = 0; i < span; i++) groups.push({ label, leaf: false }); }
+    });
+    let leafCells = Array.from(leaf.querySelectorAll('th'));
+    let li = 0;
+    groups.forEach(g => {
+      if (g.leaf) { headers.push(g.label); }
+      else { const lc = leafCells[li++]; headers.push(g.label + ' ' + cleanHeader(lc ? lc.textContent : '')); }
+    });
+  } else {
+    leaf.querySelectorAll('th').forEach(th => headers.push(cleanHeader(th.textContent)));
+  }
+  rows.push(headers);
+  table.querySelectorAll('tbody tr').forEach(tr => {
+    const cells = [];
+    tr.querySelectorAll('td').forEach(td => {
+      let val = td.dataset.sort !== undefined ? td.dataset.sort : (td.textContent || '').trim().replace(/\s+/g, ' ');
+      cells.push(val);
+    });
+    rows.push(cells);
+  });
+  const csv = rows.map(r => r.map(csvCell).join(',')).join('\r\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${baseName}_${MONTH_LC}_${YEAR}.csv`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+function cleanHeader(t) { return (t || '').replace(/[▲▼]/g, '').replace(/\s+/g, ' ').trim(); }
+function csvCell(v) {
+  v = String(v);
+  return /[",\r\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
+}
+</script>
+</body>
+</html>
