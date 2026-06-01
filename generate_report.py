@@ -34,7 +34,7 @@ import calendar
 import json
 import os
 import sys
-from datetime import date
+from datetime import date, timedelta
 from typing import Any
 
 import pandas as pd
@@ -46,6 +46,18 @@ import pandas as pd
 TABLE = "TESTUSDSession"
 TEMPLATE_FILE = "report_template.html"
 OUTPUT_DIR = "reports"
+
+# HubSpot form-submission data (separate BigQuery dataset, same project).
+HUBSPOT_DATASET = "USD_HubSpot_Data"
+HUBSPOT_TABLE = "hubspot_submissions"          # one row per form submission
+HUBSPOT_LOOKUP_TABLE = "hubspot_sales_cycle_lookup"  # form_name_hubspot -> sales_cycle
+
+# Number of weeks of history rendered in the per-program trend line charts.
+WEEK_WINDOW = 26
+
+# Persisted history cache (lives under OUTPUT_DIR, which is git-ignored). Older
+# months are reused from this file so repeat runs only re-query the current month.
+HISTORY_FILE = os.path.join(OUTPUT_DIR, "history.json")
 
 # The 15 programs included in the monthly report, in canonical display order.
 # `code` is the value found in BigQuery (program_category / lead_program).
@@ -65,15 +77,50 @@ PROGRAMS: list[dict[str, str]] = [
     {"id": "eml",         "code": "EML",         "name": "Engineering Management & Leadership",      "short": "EML"},
     {"id": "msitl",       "code": "MSITL",       "name": "Information Technology Leadership",         "short": "ITL"},
     {"id": "msnnl",       "code": "MSNNL",       "name": "Nursing Leadership",                       "short": "Nursing"},
+    {"id": "bsn",         "code": "BSN",         "name": "Bachelor of Science in Nursing",           "short": "BSN"},
 ]
 
 PROGRAM_CODES = [p["code"] for p in PROGRAMS]
+PROGRAM_ID_TO_CODE = {p["id"]: p["code"] for p in PROGRAMS}
 
 # lead_program normalization: raw BigQuery value -> canonical program code.
 LEAD_PROGRAM_NORMALIZATION = {
     "MSAAIS": "MSAAI",
     "LDT": "MSLDT",
+    "Default - BSN": "BSN",
+    "Default - BSN in Nursing": "BSN",
 }
+
+# Maps each report program `id` -> the HubSpot form-tag codes that belong to it.
+# HubSpot encodes the program in the form_name bracket tag, e.g. "[PCE-MSHCI-ALL] …"
+# or "[MSNNL] …". `hubspot_program_from_form` normalizes a tag to one of these codes.
+# `CYBER` is intentionally absent: it is an ambiguous generic bucket that could be
+# either CyberOps or CyberEng, so we leave those submissions unattributed.
+HUBSPOT_PROGRAM_CODES: dict[str, list[str]] = {
+    "informatics": ["MSHCI", "HCI"],
+    "cyberops":    ["MSCSOL"],
+    "cybereng":    ["MSCSE"],
+    "med":         ["MED", "MEd"],
+    "lepsl":       ["MSLEPSL", "LEPSL"],
+    "datascience": ["MSADS"],
+    "msaai":       ["MSAAI"],
+    "msldt":       ["MSLDT", "LDT"],
+    "mts":         ["MTS"],
+    "mesh":        ["MSESH", "MESH"],
+    "msha":        ["MSHA"],
+    "msnp":        ["MSNP", "NP"],
+    "eml":         ["MSEML", "EML"],
+    "msitl":       ["MSITL"],
+    "msnnl":       ["MSNNL"],
+    "bsn":         ["BSN"],
+}
+
+# Reverse index: HubSpot tag code (upper) -> report program id.
+_HUBSPOT_CODE_TO_ID = {
+    code.upper(): pid for pid, codes in HUBSPOT_PROGRAM_CODES.items() for code in codes
+}
+
+HUBSPOT_UNCLASSIFIED = "Unclassified"
 
 # Channels whose names begin with these prefixes are treated as noise and are
 # excluded from program-level breakdowns and charts (matches prior analyst
@@ -200,17 +247,264 @@ def run_period_queries(client, project: str, dataset: str, start: str, end: str)
     return out
 
 
-def fetch_all(project: str, dataset: str, year: int, month: int) -> dict[str, dict[str, pd.DataFrame]]:
-    """Run every query for current / prior-month / prior-year periods."""
-    from google.cloud import bigquery  # imported lazily so --mock needs no creds
+def make_client(project: str):
+    """Create a BigQuery client (imported lazily so --mock needs no creds)."""
+    from google.cloud import bigquery
 
-    client = bigquery.Client(project=project)
+    return bigquery.Client(project=project)
+
+
+def fetch_all(project: str, dataset: str, year: int, month: int, client=None) -> dict[str, dict[str, pd.DataFrame]]:
+    """Run every query for current / prior-month / prior-year periods."""
+    if client is None:
+        client = make_client(project)
     periods = date_periods(year, month)
     data: dict[str, dict[str, pd.DataFrame]] = {}
     for label, (start, end) in periods.items():
         print(f"  Querying {label}: {start} -> {end}")
         data[label] = run_period_queries(client, project, dataset, start, end)
     return data
+
+
+# ---------------------------------------------------------------------------
+# Time-series history (26-week trend charts)
+# ---------------------------------------------------------------------------
+
+
+def week_window(year: int, month: int, n: int = WEEK_WINDOW) -> tuple[str, str, list[str]]:
+    """Return (win_start, win_end, week_keys) for the last n Monday-anchored ISO weeks
+    ending at the report month-end. week_keys are ISO dates of each week's Monday."""
+    _, month_end, _ = month_bounds(year, month)
+    end_d = date.fromisoformat(month_end)
+    end_monday = end_d - timedelta(days=end_d.weekday())  # Monday of the report-end week
+    mondays = [end_monday - timedelta(weeks=i) for i in range(n)]
+    mondays.reverse()
+    week_keys = [d.isoformat() for d in mondays]
+    return mondays[0].isoformat(), month_end, week_keys
+
+
+def build_weekly_queries(project: str, dataset: str, start: str, end: str,
+                         lp_top_n: int = 8) -> dict[str, str]:
+    """Lean per-week aggregates for the trend charts (sessions/conv/landing pages).
+
+    Program + channel filters are pushed into SQL and landing pages are capped to the
+    top N per (program, week) server-side, so the whole window downloads small.
+    """
+    t = _fq_table(project, dataset)
+    where = f"WHERE date BETWEEN '{start}' AND '{end}'"
+    codes = ", ".join(f"'{c}'" for c in PROGRAM_CODES)
+    wk = "DATE_TRUNC(date, WEEK(MONDAY))"
+    # Matches is_excluded_channel: drop null channels and any 'Unknown...' bucket.
+    keep_channel = "default_channel IS NOT NULL AND NOT STARTS_WITH(default_channel, 'Unknown')"
+    return {
+        "channels": f"""
+SELECT program_category AS program, default_channel AS channel,
+       {wk} AS week_start, SUM(session) AS sessions
+FROM {t}
+{where}
+  AND program_category IN ({codes})
+  AND {keep_channel}
+GROUP BY 1, 2, 3
+""".strip(),
+        # Conversions stay program-unfiltered in SQL so lead_program variants
+        # (MSAAIS, LDT, 'Default - BSN') survive for Python-side normalization.
+        "conversions": f"""
+SELECT lead_program AS program, default_channel AS channel,
+       {wk} AS week_start, SUM(conversion) AS conversions
+FROM {t}
+{where}
+  AND conversion > 0
+  AND {keep_channel}
+GROUP BY 1, 2, 3
+""".strip(),
+        "lp": f"""
+SELECT program, week_start, landing_page, sessions FROM (
+  SELECT program, week_start, landing_page, sessions,
+         ROW_NUMBER() OVER (PARTITION BY program, week_start ORDER BY sessions DESC) AS rn
+  FROM (
+    SELECT program_category AS program, {wk} AS week_start,
+           landing_page_location AS landing_page, SUM(session) AS sessions
+    FROM {t}
+    {where}
+      AND program_category IN ({codes})
+      AND {keep_channel}
+    GROUP BY 1, 2, 3
+  )
+)
+WHERE rn <= {lp_top_n}
+""".strip(),
+    }
+
+
+def _reduce_programs(chan: pd.DataFrame, conv: pd.DataFrame, lp: pd.DataFrame,
+                     lp_top_n: int = 8) -> dict[str, dict[str, Any]]:
+    """Reduce one bucket's frames to a per-program-code record (sessions/conv/pages)."""
+    out: dict[str, dict[str, Any]] = {}
+    for code in PROGRAM_CODES:
+        c = chan[chan["program"] == code] if not chan.empty else chan
+        channels = (
+            c.groupby("channel")["sessions"].sum().astype(int).to_dict() if not c.empty else {}
+        )
+        sessions = int(sum(channels.values()))
+        conversions = int(conv.loc[conv["program"] == code, "conversions"].sum()) if not conv.empty else 0
+
+        pages: dict[str, int] = {}
+        if not lp.empty:
+            lpp = lp[lp["program"] == code]
+            if not lpp.empty:
+                lpp = lpp.copy()
+                lpp["url"] = lpp["landing_page"].map(strip_domain)
+                pages = (
+                    lpp.groupby("url")["sessions"].sum().astype(int)
+                    .sort_values(ascending=False).head(lp_top_n).to_dict()
+                )
+
+        out[code] = {
+            "sessions": sessions,
+            "conversions": conversions,
+            "convRate": conv_rate(conversions, sessions),
+            "channels": channels,
+            "landingPages": pages,
+        }
+    return out
+
+
+def summarize_weekly(frames: dict[str, pd.DataFrame], week_keys: list[str]) -> dict[str, Any]:
+    """Split windowed frames by week_start and reduce each week to per-program records."""
+    chan = filter_program_channels(frames["channels"])
+    conv = filter_program_channels(normalize_program(frames["conversions"]))
+    lp = frames["lp"].copy()
+
+    def wk_col(df: pd.DataFrame) -> pd.DataFrame:
+        if df.empty:
+            return df
+        df = df.copy()
+        df["wk"] = pd.to_datetime(df["week_start"]).dt.strftime("%Y-%m-%d")
+        return df
+
+    chan, conv, lp = wk_col(chan), wk_col(conv), wk_col(lp)
+    history: dict[str, Any] = {}
+    for key in week_keys:
+        cw = chan[chan["wk"] == key] if not chan.empty else chan
+        vw = conv[conv["wk"] == key] if not conv.empty else conv
+        lw = lp[lp["wk"] == key] if not lp.empty else lp
+        history[key] = {"programs": _reduce_programs(cw, vw, lw)}
+    return history
+
+
+def load_history(path: str) -> dict[str, Any]:
+    if os.path.exists(path):
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except (json.JSONDecodeError, OSError):
+            print(f"  WARNING: could not read history file {path}; rebuilding.")
+    return {}
+
+
+def save_history(path: str, history: dict[str, Any]) -> None:
+    os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(history, f, ensure_ascii=False, indent=0)
+
+
+def fetch_weekly_history(client, project: str, dataset: str, win_start: str, win_end: str,
+                         week_keys: list[str], path: str) -> dict[str, Any]:
+    """Query the full week window once (3 aggregated queries) and persist the snapshot."""
+    print(f"  Weekly history: {win_start} -> {win_end} ({len(week_keys)} weeks)")
+    frames = {name: client.query(sql).to_dataframe()
+              for name, sql in build_weekly_queries(project, dataset, win_start, win_end).items()}
+    history = summarize_weekly(frames, week_keys)
+    save_history(path, history)
+    return history
+
+
+# ---------------------------------------------------------------------------
+# HubSpot form submissions
+# ---------------------------------------------------------------------------
+
+
+def build_hubspot_query(project: str, hubspot_dataset: str, start: str, end: str) -> str:
+    """Form-level submission counts for one period, with sales-cycle from the lookup."""
+    subs = f"`{project}.{hubspot_dataset}.{HUBSPOT_TABLE}`"
+    lookup = f"`{project}.{hubspot_dataset}.{HUBSPOT_LOOKUP_TABLE}`"
+    return f"""
+SELECT s.form_name AS form_name,
+       COALESCE(l.sales_cycle, '{HUBSPOT_UNCLASSIFIED}') AS sales_cycle,
+       COUNT(*) AS subs
+FROM {subs} s
+LEFT JOIN {lookup} l ON s.form_name = l.form_name_hubspot
+WHERE DATE(s.date) BETWEEN '{start}' AND '{end}'
+GROUP BY 1, 2
+""".strip()
+
+
+def fetch_hubspot_periods(client, project: str, hubspot_dataset: str, year: int, month: int
+                          ) -> dict[str, pd.DataFrame]:
+    """Query HubSpot form submissions for current / prior-month / prior-year periods."""
+    periods = date_periods(year, month)
+    out: dict[str, pd.DataFrame] = {}
+    for label, (start, end) in periods.items():
+        print(f"  HubSpot {label}: {start} -> {end}")
+        df = client.query(build_hubspot_query(project, hubspot_dataset, start, end)).to_dataframe()
+        if not df.empty:
+            df = df.copy()
+            df["pid"] = df["form_name"].map(hubspot_program_from_form)
+            df["form"] = df["form_name"].map(clean_form_name)
+        out[label] = df
+    return out
+
+
+def _hs_subset(df: pd.DataFrame, program_id: str) -> pd.DataFrame:
+    if df.empty or "pid" not in df.columns:
+        return pd.DataFrame(columns=["form", "sales_cycle", "subs"])
+    return df[df["pid"] == program_id]
+
+
+def build_program_hubspot(periods: dict[str, pd.DataFrame], program_id: str) -> dict[str, Any] | None:
+    """Per-program HubSpot summary: totals, sales-cycle split, and form-level rows."""
+    cur = _hs_subset(periods.get("current", pd.DataFrame()), program_id)
+    pm = _hs_subset(periods.get("prior_month", pd.DataFrame()), program_id)
+    py = _hs_subset(periods.get("prior_year", pd.DataFrame()), program_id)
+
+    def total(df: pd.DataFrame) -> int:
+        return int(df["subs"].sum()) if not df.empty else 0
+
+    def cycle(df: pd.DataFrame, name: str) -> int:
+        return int(df.loc[df["sales_cycle"] == name, "subs"].sum()) if not df.empty else 0
+
+    def form_map(df: pd.DataFrame) -> dict[tuple[str, str], int]:
+        if df.empty:
+            return {}
+        g = df.groupby(["form", "sales_cycle"], as_index=False)["subs"].sum()
+        return {(r["form"], r["sales_cycle"]): int(r["subs"]) for _, r in g.iterrows()}
+
+    cur_total = total(cur)
+    if cur_total == 0 and total(pm) == 0 and total(py) == 0:
+        return None  # program has no HubSpot footprint at all
+
+    cur_forms, pm_forms, py_forms = form_map(cur), form_map(pm), form_map(py)
+    forms: list[dict[str, Any]] = []
+    for (form, sc), subs in sorted(cur_forms.items(), key=lambda kv: kv[1], reverse=True):
+        forms.append({
+            "form": form,
+            "salesCycle": sc,
+            "subs": subs,
+            "momDelta": subs - pm_forms.get((form, sc), 0),
+            "yoyDelta": subs - py_forms.get((form, sc), 0),
+        })
+
+    return {
+        "total": cur_total,
+        "momTotal": pct_change(cur_total, total(pm)),
+        "yoyTotal": pct_change(cur_total, total(py)),
+        "momTotalDelta": cur_total - total(pm),
+        "yoyTotalDelta": cur_total - total(py),
+        "salesReady": cycle(cur, SALES_READY_LABEL),
+        "earlyStage": cycle(cur, EARLY_STAGE_LABEL),
+        "unclassified": cycle(cur, HUBSPOT_UNCLASSIFIED),
+        "forms": forms,
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -277,6 +571,50 @@ def strip_domain(url: str | float) -> str:
     if not s.startswith("/"):
         s = "/" + s
     return s or "/"
+
+
+# ---------------------------------------------------------------------------
+# HubSpot form helpers
+# ---------------------------------------------------------------------------
+
+
+def hubspot_program_from_form(form_name: str | float) -> str | None:
+    """Map a HubSpot form_name to a report program `id` via its bracket tag.
+
+    Form names look like "[PCE-MSHCI-ALL] [GF] [RMI] PPC LP …" or "[MSNNL] [RMI] …".
+    We take the leading bracket token, drop a `PCE-` prefix and trailing `-ALL`/`-OL`/
+    `-OC` suffixes, then look the code up in HUBSPOT_PROGRAM_CODES. Returns None for
+    forms with no recognizable program tag (e.g. school-wide `[PCE-ALL]`, `CYBER`).
+    """
+    if not isinstance(form_name, str) or "[" not in form_name:
+        return None
+    tag = form_name.split("[", 1)[1].split("]", 1)[0].strip().upper()
+    if tag.startswith("PCE-"):
+        tag = tag[4:]
+    for suffix in ("-ALL", "-OL", "-OC"):
+        if tag.endswith(suffix):
+            tag = tag[: -len(suffix)]
+    return _HUBSPOT_CODE_TO_ID.get(tag)
+
+
+def clean_form_name(form_name: str | float) -> str:
+    """Strip bracket tags and the boilerplate suffix for a readable form label."""
+    if not isinstance(form_name, str) or not form_name:
+        return "—"
+    s = form_name
+    # Remove all leading "[...]" tag groups.
+    while s.lstrip().startswith("["):
+        s = s.lstrip()
+        end = s.find("]")
+        if end == -1:
+            break
+        s = s[end + 1:]
+    # Drop the "( Do not delete or edit )" style trailing note.
+    idx = s.find("(")
+    if idx != -1 and "delete" in s[idx:].lower():
+        s = s[:idx]
+    s = s.strip()
+    return s or form_name.strip()
 
 
 # ---------------------------------------------------------------------------
@@ -457,8 +795,47 @@ def build_sales_cycle(period: dict[str, pd.DataFrame], code: str) -> tuple[int, 
     return ready, early
 
 
-def build_programs(data: dict[str, dict[str, pd.DataFrame]]) -> list[dict[str, Any]]:
-    """Build the per-program JSON array (all 15 programs, canonical order)."""
+def build_program_trend(history: dict[str, Any], trend_keys: list[str], code: str,
+                        max_channels: int = 6, max_pages: int = 5) -> dict[str, Any]:
+    """26-week trend series for one program: sessions-by-channel, conv rate, landing pages.
+
+    trend_keys are ISO week-start dates ('YYYY-MM-DD'); labels are 'M/D' week starts.
+    """
+    labels = [f"{int(k.split('-')[1])}/{int(k.split('-')[2])}" for k in trend_keys]
+    recs = [history.get(k, {}).get("programs", {}).get(code, {}) for k in trend_keys]
+
+    # Sessions by channel: pick the channels with the most total sessions across the window.
+    chan_totals: dict[str, int] = {}
+    for r in recs:
+        for ch, v in (r.get("channels") or {}).items():
+            chan_totals[ch] = chan_totals.get(ch, 0) + int(v)
+    top_channels = [ch for ch, _ in sorted(chan_totals.items(), key=lambda kv: kv[1], reverse=True)][:max_channels]
+    chan_series = {ch: [int((r.get("channels") or {}).get(ch, 0)) for r in recs] for ch in top_channels}
+
+    # Conversion rate trend (may contain nulls where a month had no sessions).
+    conv_rate_series = [r.get("convRate") if r else None for r in recs]
+
+    # Landing pages: top pages by the latest month's sessions.
+    latest_pages = recs[-1].get("landingPages") if recs and recs[-1] else None
+    latest_pages = latest_pages or {}
+    top_pages = [u for u, _ in sorted(latest_pages.items(), key=lambda kv: kv[1], reverse=True)][:max_pages]
+    page_series = {u: [int((r.get("landingPages") or {}).get(u, 0)) for r in recs] for u in top_pages}
+
+    return {
+        "months": labels,
+        "channels": {"labels": labels, "series": chan_series},
+        "convRate": conv_rate_series,
+        "landingPages": {"series": page_series},
+    }
+
+
+def build_programs(data: dict[str, dict[str, pd.DataFrame]],
+                   history: dict[str, Any] | None = None,
+                   trend_keys: list[str] | None = None,
+                   hubspot_periods: dict[str, pd.DataFrame] | None = None) -> list[dict[str, Any]]:
+    """Build the per-program JSON array (all programs, canonical order)."""
+    history = history or {}
+    trend_keys = trend_keys or []
     cur_sess = program_session_totals(data["current"])
     pm_sess = program_session_totals(data["prior_month"])
     py_sess = program_session_totals(data["prior_year"])
@@ -534,6 +911,8 @@ def build_programs(data: dict[str, dict[str, pd.DataFrame]]) -> list[dict[str, A
             },
             "channelDetails": channel_details,
             "landingPages": build_landing_pages(data, code),
+            "trend": build_program_trend(history, trend_keys, code),
+            "hubspot": build_program_hubspot(hubspot_periods or {}, p["id"]),
         })
     return programs
 
@@ -599,6 +978,55 @@ def mock_data(year: int, month: int) -> dict[str, dict[str, pd.DataFrame]]:
     }
 
 
+def mock_weekly_history(year: int, month: int, n: int = WEEK_WINDOW) -> tuple[dict[str, Any], list[str]]:
+    """Synthetic 26-week history so --mock previews the weekly trend charts offline."""
+    _, _, week_keys = week_window(year, month, n)
+    history: dict[str, Any] = {}
+    for i, key in enumerate(week_keys):
+        # Gentle ramp + light wiggle so the weekly lines visibly move.
+        scale = (0.70 + 0.012 * i) * (1.0 + 0.06 * ((i % 3) - 1)) / 4.3
+        frames = _mock_period_frames(scale, year, month)
+        chan = frames["sessions"][["program", "channel", "sessions"]]
+        conv = frames["conversions"]
+        lp = frames["lp_sessions"]
+        history[key] = {"programs": _reduce_programs(
+            filter_program_channels(chan),
+            filter_program_channels(normalize_program(conv)),
+            lp,
+        )}
+    return history, week_keys
+
+
+def mock_hubspot_periods(year: int, month: int) -> dict[str, pd.DataFrame]:
+    """Synthetic HubSpot form submissions for current/prior-month/prior-year."""
+    forms = [
+        ("[PCE-{tag}] [GF] [RMI] PPC LP ( Do not delete or edit )", SALES_READY_LABEL, 1.0),
+        ("[PCE-{tag}] [GF] [RMI] Program Page RFI ( Do not delete or edit )", SALES_READY_LABEL, 0.4),
+        ("[PCE-{tag}] [GF] [RESOURCE] Career Guide ( Do not delete or edit )", EARLY_STAGE_LABEL, 0.25),
+    ]
+    scales = {"current": 1.0, "prior_month": 0.85, "prior_year": 0.7}
+    out: dict[str, pd.DataFrame] = {}
+    for label, sc in scales.items():
+        rows = []
+        for pi, p in enumerate(PROGRAMS):
+            codes = HUBSPOT_PROGRAM_CODES.get(p["id"]) or []
+            if not codes:
+                continue
+            tag = codes[0]
+            base = 30 + pi * 4
+            for fname, cycle, w in forms:
+                subs = int(base * w * sc)
+                if subs <= 0:
+                    continue
+                rows.append({"form_name": fname.format(tag=tag), "sales_cycle": cycle, "subs": subs})
+        df = pd.DataFrame(rows)
+        if not df.empty:
+            df["pid"] = df["form_name"].map(hubspot_program_from_form)
+            df["form"] = df["form_name"].map(clean_form_name)
+        out[label] = df
+    return out
+
+
 # ---------------------------------------------------------------------------
 # Template rendering
 # ---------------------------------------------------------------------------
@@ -623,6 +1051,15 @@ def main() -> int:
     parser.add_argument("--template", default=TEMPLATE_FILE)
     parser.add_argument("--report-date", help="Report date label, e.g. 'March 12, 2026' (default: today)")
     parser.add_argument("--force", action="store_true", help="Overwrite an existing report file")
+    parser.add_argument("--hubspot-dataset", default=HUBSPOT_DATASET,
+                        help=f"BigQuery dataset for HubSpot tables (default: {HUBSPOT_DATASET})")
+    parser.add_argument("--history-file", default=HISTORY_FILE,
+                        help=f"Persisted trend-history cache (default: {HISTORY_FILE})")
+    parser.add_argument("--trend-weeks", type=int, default=WEEK_WINDOW,
+                        help=f"Weeks shown in the trend line charts (default: {WEEK_WINDOW})")
+    parser.add_argument("--firebase-config",
+                        help="Path to a Firebase web-config JSON to enable shared comments "
+                             "(Firestore + Google sign-in). Omit for localStorage-only comments.")
     args = parser.parse_args()
 
     if not args.mock and (not args.project or not args.dataset):
@@ -636,12 +1073,22 @@ def main() -> int:
     if args.mock:
         print(f"Generating MOCK data for {month_name} {year} (no BigQuery)...")
         data = mock_data(year, month)
+        history, trend_keys = mock_weekly_history(year, month, args.trend_weeks)
+        hubspot_periods = mock_hubspot_periods(year, month)
     else:
         print(f"Querying BigQuery for {month_name} {year}...")
-        data = fetch_all(args.project, args.dataset, year, month)
+        client = make_client(args.project)
+        data = fetch_all(args.project, args.dataset, year, month, client=client)
+        print("Querying weekly trend history...")
+        win_start, win_end, trend_keys = week_window(year, month, args.trend_weeks)
+        history = fetch_weekly_history(client, args.project, args.dataset,
+                                       win_start, win_end, trend_keys, args.history_file)
+        print("Querying HubSpot form submissions...")
+        hubspot_periods = fetch_hubspot_periods(client, args.project, args.hubspot_dataset, year, month)
 
     print("Building report data structures...")
-    programs = build_programs(data)
+    programs = build_programs(data, history=history, trend_keys=trend_keys,
+                              hubspot_periods=hubspot_periods)
     schoolwide = build_schoolwide(data)
 
     # Report date label.
@@ -650,6 +1097,18 @@ def main() -> int:
     else:
         report_date = date.today().strftime("%B %d, %Y")
 
+    # Comments: stable report id + optional Firebase config (None -> localStorage fallback).
+    report_id = f"usd_online_{year}_{month:02d}"
+    firebase_config: Any = None
+    if args.firebase_config:
+        if os.path.exists(args.firebase_config):
+            with open(args.firebase_config, "r", encoding="utf-8") as f:
+                firebase_config = json.load(f)
+            print(f"  Comments: Firestore + Google sign-in enabled (config {args.firebase_config})")
+        else:
+            print(f"  WARNING: --firebase-config not found: {args.firebase_config}; "
+                  "comments fall back to localStorage.", file=sys.stderr)
+
     replacements = {
         "MONTH_NAME": month_name,
         "YEAR": str(year),
@@ -657,8 +1116,10 @@ def main() -> int:
         "MONTH_DAYS": str(days),
         "MONTH_LC": month_name.lower(),
         "REPORT_DATE": report_date,
+        "REPORT_ID": report_id,
         "PROGRAMS_JSON": json.dumps(programs, ensure_ascii=False),
         "SCHOOL_WIDE_JSON": json.dumps(schoolwide, ensure_ascii=False),
+        "FIREBASE_CONFIG_JSON": json.dumps(firebase_config, ensure_ascii=False),
     }
 
     if not os.path.exists(args.template):

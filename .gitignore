@@ -18,3 +18,11 @@ __pycache__/
 # Generated reports — contain real USD analytics data; this repo is PUBLIC.
 # Ignored by default so live data isn't published. Remove this line to track them.
 reports/
+
+# Firebase: web config (not secret, but keep out of the public repo) + local CLI state
+firebase_config.json
+.firebase/
+firebase-debug.log
+
+# Firebase Hosting staging dir (generated; holds the rendered report)
+public/

@@ -1,0 +1,14 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Report comments: anyone may read; only signed-in users may create their own;
+    // only the author may edit/delete. `uid` must match the authenticated user.
+    match /report_comments/{reportId}/comments/{commentId} {
+      allow read: if true;
+      allow create: if request.auth != null
+                    && request.resource.data.uid == request.auth.uid;
+      allow update, delete: if request.auth != null
+                    && resource.data.uid == request.auth.uid;
+    }
+  }
+}
